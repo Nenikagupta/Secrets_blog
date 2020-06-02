@@ -4,14 +4,15 @@ const express=require('express');
 const bodyparser=require('body-parser');
 const ejs=require('ejs');
 const mongoose=require('mongoose');
-const encrypt=require('mongoose-encryption');
+const md5=require('md5');
 const app=express();
+
 
 app.use(bodyparser.urlencoded({extended: true}));
 app.use(express.static("public"));
 app.set('view engine','ejs');
 
-console.log(process.env.API_KEY);
+//console.log(process.env.API_KEY);
 
 mongoose.connect("mongodb://localhost:27017/secretDB",{useNewUrlParser: true,useUnifiedTopology: true});
 
@@ -20,8 +21,6 @@ const UserSchema=new mongoose.Schema({
   password:String
 });
 
-
-UserSchema.plugin(encrypt,{secret:process.env.SECRET, encryptedFields:["password"] });
 
 const User=new mongoose.model("User",UserSchema);
 
@@ -40,7 +39,7 @@ app.get("/register",function(req,res){
 app.post("/register",function(req,res){
   const newUser=new User({
     email:req.body.username,
-    password:req.body.password
+    password:md5(req.body.password)
   });
 
   newUser.save(function(err){
@@ -55,7 +54,7 @@ app.post("/register",function(req,res){
 
 app.post("/login",function(req,res){
   var newemail=req.body.username;
-  var password=req.body.password;
+  var password=md5(req.body.password);
 
   User.findOne({email:newemail},function(err,foundItem){
     if(err){
