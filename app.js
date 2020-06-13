@@ -33,7 +33,8 @@ mongoose.set("useCreateIndex",true);
 const UserSchema=new mongoose.Schema({
   email:String,
   password:String,
-  facebookId:String
+  facebookId:String,
+  secret:String
 });
 
 //plugin using passportlocalmongoose for database
@@ -125,8 +126,20 @@ app.get("/register",function(req,res){
 });
 
 app.get("/secrets",function(req,res){
+  User.find({"secret": {$ne:null}},function(err,foundUser){
+    if(err){
+      console.log(err);
+    }else{
+      if(foundUser){
+        res.render("secrets", { userWithSecret:foundUser});
+      }
+    }
+  });
+});
+
+app.get("/submit",function(req,res){
   if(req.isAuthenticated()){
-    res.render("secrets");
+    res.render("submit");
   }else{
     res.redirect("/login");
   }
@@ -168,6 +181,24 @@ app.post("/login",function(req,res){
     }
   });
 
+});
+
+app.post("/submit",function(req,res){
+  const submitsecret=req.body.secret;
+  console.log(req.user.id);
+
+  User.findById(req.user.id, function(err,foundUser){
+    if(err){
+      console.log(err);
+    }else{
+      if(foundUser){
+        foundUser.secret=submitsecret;
+        foundUser.save(function(){
+          res.redirect("/secrets");
+        });
+      }
+    }
+  });
 });
 
 app.listen(3000,function(){
